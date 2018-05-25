@@ -6,78 +6,77 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
         alert('Font could not be loaded: ' + err);
     } else {
 
-        let w = 500,
-            h = 500;
+        let w = d3.select('#contourdown').node().getBoundingClientRect().width,
+            h = d3.select('#contourdown').node().getBoundingClientRect().height;
+
+        let delta_h = h;
+
+        let pointsAmount = 300, moveRandomly = 6;
 
         let svg = d3.select('#contourdown').append('svg')
             .attr('width', w)
             .attr('height', h)
-            .style('background-color', '#e4e4e4')
+        // .style('background-color', '#e4e4e4')
 
-        let g = svg.append('g').attr('transform', `translate(0,${h/2 - 0})`)
+        let g = svg.append('g')
 
-        g.append('path')
+        let counterText = g.append('path')
             .attr('class', 'outlined-texts')
-            .attr('fill', 'red')
-            .style('display', 'none')
+            // .attr('fill', 'red')
+            .style('opacity', '0')
 
         let points = g.selectAll('.points');
 
-
-
-        // // Get points with svg-points
-        // removed
-        // let pathObj = {
-        //     type: 'path',
-        //     d: pathData
-        // }
-        // let pointsData = toPoints(pathObj);
-
-
-        let width = w,
-            height = h,
-            margin = { top: 0, right: 0, bottom: 0, left: 0 };
-
-        var x = d3.scaleLinear()
-            .domain([0, 500])
-            .range([margin.left, width - margin.right]);
-
-        var y = d3.scaleLinear()
-            .domain([500, 0])
-            .range([height - margin.bottom, margin.top]);
-
-        var color = d3.scaleSequential(d3.interpolateYlGnBu)
-            .domain([0, 0.05]); // Points per square pixel.
-
         let contours = svg.insert("g", "g")
             .classed('contours-group', true)
-            // .attr("stroke-linejoin", "round")
+            .attr("stroke-linejoin", "round")
             .selectAll("path")
+
+
+        var color = d3.scaleSequential()
+            .domain([0, 0.01]) // Points per square pixel.
+            .interpolator(d3.interpolateRainbow)
 
         var formatTime = d3.timeFormat("%H %M %S");
         // formatTime(new Date); // "June 30, 2015"
 
-        let string = formatTime(new Date);
+        let string;
 
         let idleInterval = setInterval(timerIncrement, 1000);
 
-        timerIncrement();
+        // timerIncrement('RAW');
 
-        function timerIncrement() {
-            string = formatTime(new Date);
+        var pathData;
+
+        function timerIncrement(txt) {
+
+            string = txt ? txt : formatTime(new Date);
+
+            pointsAmount = string.length*75;
+
+            // string = 
             // console.log(string);
-            var pathData = font.getPath(string, 25, 150, 120);
+
+
+
+            if ( !pathData ) {
+                pathData = font.getPath(string, 25, delta_h, w / 4.1);
+                pathData = pathData.toPathData();
+                counterText.attr('d', pathData);
+            }
+
+            delta_h = h / 2 + counterText.node().getBBox().height / 2;
+
+            pathData = font.getPath(string, 25, delta_h, w / 4.1);
             pathData = pathData.toPathData();
-            d3.select('.outlined-texts')
-                // .transition()
-                // .duration(500)
-                .attr('d', pathData);
+            counterText.attr('d', pathData);
+
 
             let pointsData = [];
 
-            for (i = 1; i <= 500; i++) {
+            for (i = 1; i <= pointsAmount; i++) {
                 // console.log(i)
-                let position = d3.select('.outlined-texts').node().getTotalLength() / 500 * i;
+                let position = d3.select('.outlined-texts').node().getTotalLength() / pointsAmount * i;
                 let thisPoint = d3.selectAll('.outlined-texts').node().getPointAtLength(position);
                 // console.log(thisPoint);
                 thisPoint.id = i;
@@ -86,22 +85,22 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
 
             pointsData = pointsData.map(function(d) {
                 return {
-                    'x': d.x,
-                    'y': d.y,
+                    'x': d.x + d3.randomUniform(-moveRandomly, moveRandomly)(),
+                    'y': d.y + d3.randomUniform(-moveRandomly, moveRandomly)(),
                     'id': d.id
                 }
             })
 
-            // for (i = 1; i <= 350; i++) {
-            // 	let thisX = d3.randomUniform(0, w)();
-            // 	let thisY = d3.randomUniform(0, h)()
-            //     let randomPoint = {
-            //         x: thisX,
-            //         y: thisY,
-            //         id: 500 + i
-            //     }
-            //     pointsData.push(randomPoint);
-            // }
+            for (i = 1; i <= h/2; i++) {
+                let thisX = d3.randomUniform(0, w)();
+                let thisY = d3.randomUniform(0, h)()
+                let randomPoint = {
+                    x: thisX,
+                    y: thisY,
+                    id: pointsAmount + i
+                }
+                pointsData.push(randomPoint);
+            }
 
             // console.log(pointsData)
 
@@ -118,19 +117,20 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             //     .attr('cy', function(d) { return d.y })
 
             contours = contours.data(d3.contourDensity()
-                .x(function(d) { return x(d.x); })
-                .y(function(d) { return y(d.y); })
-                .size([width, height])
-                .bandwidth(5)
-                (pointsData), function(d){return d.id;})
+                .x(function(d) { return d.x; return x(d.x); })
+                .y(function(d) { return d.y; return y(d.y); })
+                .size([w, h])
+                .bandwidth(13)
+                (pointsData),
+                function(d) { return d.id; })
 
             contours.exit().remove();
 
             contours = contours.enter().append("path")
                 .merge(contours)
-                .classed('shown', true)
+                .classed('contour', true)
                 .attr("d", d3.geoPath())
-                .attr("fill", function(d) { return color(d.value); })
+                .attr("stroke", function(d) { return color(d.value); })
 
             // contours.transition()
             // .duration(500)
