@@ -3,6 +3,8 @@ d3.select('#contourdown')
     .style('height',0)
     .style('padding-bottom', 'calc(100% / 1.5)')
 
+var color;
+
 opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
     if (err) {
         alert('Font could not be loaded: ' + err);
@@ -45,8 +47,8 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             .selectAll("path")
 
 
-        var color = d3.scaleSequential()
-            .domain([0, 0.01]) // Points per square pixel.
+        color = d3.scaleSequential()
+            .domain([0.032, 0]) // Points per square pixel.
             .interpolator(d3.interpolateRainbow)
 
         var formatTime = d3.timeFormat("%H %M %S");
