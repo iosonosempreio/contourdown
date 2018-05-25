@@ -22,7 +22,7 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
 
         // parameters set for 768 px width svg
         let pointsAmount, pointsLetter = 75,
-            moveRandomly = 6,
+            moveRandomly = 4,
             bandwidth = 10;
 
         let svg = d3.select('#contourdown')
@@ -66,7 +66,7 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
 
             delta_h = h / 2 + counterText.node().getBBox().height / 2;
 
-            pathData = font.getPath(string, 50, 310, 188);
+            pathData = font.getPath(string, 50, 310, 170);
             pathData = pathData.toPathData();
             counterText.attr('d', pathData);
 
@@ -87,7 +87,7 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
                 }
             })
 
-            for (i = 1; i <= h / 2; i++) {
+            for (i = 1; i <= h*2 / 2; i++) {
                 let thisX = d3.randomUniform(0, w)();
                 let thisY = d3.randomUniform(0, h)()
                 let randomPoint = {
