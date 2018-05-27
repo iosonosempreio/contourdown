@@ -2,24 +2,23 @@ d3.select('#contourdown')
     .style('width', '100%')
     .style('height', 0)
     .style('padding-bottom', 'calc(100% / 3)')
-    .style('border','1px solid #7D3C98')
-    .style('border-radius','3px')
-    .style('overflow','hidden')
+    .style('border', '1px solid #7D3C98')
+    .style('border-radius', '3px')
+    .style('overflow', 'hidden')
 
 // d3.select('body').append('h1').attr('id', 'duration')
 
 var color;
 let run = true;
 
-// parameters set for 768 px width svg
+// parameters have been calculated for 768 px width responsive svg
 let pointsAmount,
     pointsLetter = 40,
     bandwidth = 8;
 
-let moveRandomly = 20,
-    targetMoveRandomly = 2,
-    durationSecs = 0,
-    step = (moveRandomly - targetMoveRandomly) / durationSecs;
+let moveRandomly = 2;
+
+let interval = 250;
 
 let pathConfig = {
     string: 'string',
@@ -37,21 +36,29 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             H = d3.select('#contourdown').node().getBoundingClientRect().height;
 
         let w = 768,
-            h = 768 / 3 * 1;
+            h = 768 / 3;
 
         amountBGpoints = h * 0.5;
 
-        let delta_h = h;
+        if (isMobileDevice()) {
+            d3.select('body').style('background-color', '#FEF9E7')
+            pointsLetter = 20;
+            bandwidth = 8;
+            amountBGpoints = h * 0.1;
+            pathConfig.fontSize = 180;
+            color.domain([0.008, 0])
+            interval = 1000;
+        }
+
         let string;
         var pathData;
 
         let svg = d3.select('#contourdown')
             .append('svg')
             .attr('viewBox', `0 0 ${w} ${h}`)
-            .attr('preserveAspectRatio', `xMidYMid meet`)
             .style('width', '100%')
             .style('height', 'auto')
-            .style('background-color', '#f5f5f5')
+            .style('background-color', '#F5EEF8')
 
         let g = svg.append('g')
 
@@ -70,18 +77,7 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             .interpolator(d3.interpolateRainbow)
 
         var formatTime = d3.timeFormat("%H %M %S");
-        let interval = isMobileDevice() ? 1000 : 500;
         let idleInterval = setInterval(timerIncrement, interval);
-
-
-        if (isMobileDevice()) {
-            d3.select('body').style('background-color', '#FEF9E7')
-            pointsLetter = 20;
-            bandwidth = 8;
-            amountBGpoints = h * 0.1;
-            pathConfig.fontSize = 180;
-            color.domain([0.008, 0])
-        }
 
         timerIncrement();
 
@@ -93,22 +89,9 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
 
             if (run) {
 
-                // augment definition step by step untill it reaches the target one (see at top of this file)
-                if (durationSecs > 0) {
-                    moveRandomly = (moveRandomly >= targetMoveRandomly) ? (moveRandomly - (step * (interval / 1000))) : targetMoveRandomly;
-                } else {
-                    moveRandomly = targetMoveRandomly;
-                }
-
-
                 string = txt ? txt : formatTime(new Date);
-
                 pathConfig.string = string;
-
                 pointsAmount = string.length * pointsLetter;
-
-                delta_h = h / 2 + counterText.node().getBBox().height / 2;
-
                 pathData = font.getPath(pathConfig.string, pathConfig.x, pathConfig.y, pathConfig.fontSize);
                 pathData = pathData.toPathData();
 
@@ -175,9 +158,8 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
 
             var date2 = new Date();
             var diff = date2 - date1; //milliseconds interval
-            // console.log(diff)
 
-            if (d3.select('#duration')){
+            if (d3.select('#duration')) {
                 d3.select('#duration').html(diff + ' - ' + pointsData.length);
             }
         }
