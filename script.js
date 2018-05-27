@@ -8,12 +8,14 @@ d3.select('#contourdown')
 
 // d3.select('body').append('h1').attr('id', 'duration')
 
-var color;
+var color = d3.scaleSequential()
+    .domain([0.015, 0]) // Points per square pixel.
+    .interpolator(d3.interpolateRainbow)
 let run = true;
 
 // parameters have been calculated for 768 px width responsive svg
 let pointsAmount,
-    pointsLetter = 40,
+    pointsLetter = 37,
     bandwidth = 8;
 
 let moveRandomly = 2;
@@ -41,7 +43,6 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
         amountBGpoints = h * 0.5;
 
         if (isMobileDevice()) {
-            d3.select('body').style('background-color', '#FEF9E7')
             pointsLetter = 20;
             bandwidth = 8;
             amountBGpoints = h * 0.1;
@@ -70,11 +71,6 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             .classed('contours-group', true)
             .attr("stroke-linejoin", "round")
             .selectAll("path")
-
-
-        color = d3.scaleSequential()
-            .domain([0.015, 0]) // Points per square pixel.
-            .interpolator(d3.interpolateRainbow)
 
         var formatTime = d3.timeFormat("%H %M %S");
         let idleInterval = setInterval(timerIncrement, interval);
@@ -159,7 +155,7 @@ opentype.load('fonts/WorkSans-Hairline.otf', function(err, font) {
             var date2 = new Date();
             var diff = date2 - date1; //milliseconds interval
 
-            if (d3.select('#duration')) {
+            if (d3.select('#duration') > 0) {
                 d3.select('#duration').html(diff + ' - ' + pointsData.length);
             }
         }
